@@ -1,0 +1,20 @@
+# IntelliJ
+*.iml
+*.ipr
+*.iws
+.idea
+*/checkpoint
+
+# Maven
+**/target/
+**/logs/
+*.versionsBackup
+.flattened-pom.xml
+**/scalastyle-output.xml
+
+# Shadowtraffic license
+license.env
+
+metastore_db/
+.metals/
+spark-warehouse/

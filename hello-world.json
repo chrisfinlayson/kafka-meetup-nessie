@@ -1,0 +1,24 @@
+{
+  "generators": [
+      {
+          "topic": "sandbox",
+          "value": {
+              "_gen": "sequentialString",
+              "expr": "id-~d"
+          },
+          "producerConfigs": {
+              "value.serializer": "org.apache.kafka.common.serialization.StringSerializer"
+          }
+      }
+  ],
+  "connections": {
+      "kafka": {
+          "kind": "kafka",
+          "producerConfigs": {
+              "bootstrap.servers": "localhost:9092",
+              "key.serializer": "io.shadowtraffic.kafka.serdes.JsonSerializer",
+              "value.serializer": "io.shadowtraffic.kafka.serdes.JsonSerializer"
+          }
+      }
+  }
+}

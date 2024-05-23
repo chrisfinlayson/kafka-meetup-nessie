@@ -1,0 +1,13 @@
+----------------------------------------------------------------
+Thu May 23 19:24:06 BST 2024:
+Booting Derby version The Apache Software Foundation - Apache Derby - 10.14.2.0 - (1828579): instance a816c00e-018f-a6b2-3060-000024ed79d0 
+on database directory /Users/christopherfinlayson/dev/kafka-meetup-nessie/metastore_db with class loader sun.misc.Launcher$AppClassLoader@312b1dae 
+Loaded from file:/opt/spark/version/spark-3.5.1-bin-hadoop3/jars/derby-10.14.2.0.jar
+java.vendor=Azul Systems, Inc.
+java.runtime.version=1.8.0_312-b07
+user.dir=/Users/christopherfinlayson/dev/kafka-meetup-nessie
+os.name=Mac OS X
+os.arch=aarch64
+os.version=14.2.1
+derby.system.home=null
+Database Class Loader started - derby.database.classpath=''

@@ -1,12 +1,12 @@
 # spark3-maven-starter
-This project provides a starter template for building a Spark 3.0.0 project with maven build with Scala 2.12.
+This project provides a starter template for building a Spark 3.5.0 project with maven build with Scala 2.13.
 
 All required dependencies for Spark SQL are added in this template
 
 #### This setup features:
 
-    Spark 3.0.0
-    Scala 2.12.8
+    Spark 3.5.0
+    Scala 2.13.8
     
 #### To start building the project:
     mvn clean install
@@ -19,5 +19,5 @@ All required dependencies for Spark SQL are added in this template
     mvn scalastyle:check
     
 ##### Running Scoverage:
-    mvn scoverage:check# kafka-meetup-nessie
-# kafka-meetup-nessie
+    mvn scoverage:check#
+
