@@ -1,0 +1,9 @@
+{
+    "topic" : "purchases",
+    "key" : "3e791dba-bb84-0401-b091-5dbef70366b2",
+    "value" : {
+      "timestamp" : "2024-05-26T19:03:56.010+00:00",
+      "product" : "Awesome Iron Hat",
+      "totalAmount" : 52.59
+    }
+  }

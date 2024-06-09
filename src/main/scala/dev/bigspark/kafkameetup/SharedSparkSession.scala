@@ -1,10 +1,9 @@
 package dev.bigspark.kafkameetup
 
-import dev.bigspark.kafkameetup.SparkApplication.spark
+import dev.bigspark.kafkameetup.NessieApplication.{authType, fullPathToWarehouse, ref, url}
 import org.apache.spark.sql.SparkSession
 
-object SparkApplication extends App{
-
+trait SharedSparkSession {
   // Full url of the Nessie API endpoint to nessie
   val url = "http://localhost:19120/api/v1";
   // Where to store nessie tables
@@ -17,9 +16,10 @@ object SparkApplication extends App{
   val authType = "NONE";
   // for a local spark instance
   val spark = SparkSession.builder()
-    .appName("sample-spark")
+    .appName("Kafka meetup")
     .config("spark.jars.packages", "org.apache.iceberg:iceberg-spark-runtime-3.3_2.12:1.5.2" +
-      ",org.projectnessie.nessie-integrations:nessie-spark-extensions-3.3_2.12:0.83.2")
+      ",org.projectnessie.nessie-integrations:nessie-spark-extensions-3.3_2.12:0.83.2" +
+      ",org.apache.hadoop:hadoop-aws:3.3.4")
     .config("spark.sql.extensions", "org.apache.iceberg.spark.extensions.IcebergSparkSessionExtensions," +
       "org.projectnessie.spark.extensions.NessieSparkSessionExtensions")
     .config("spark.sql.catalog.nessie.uri", url)
@@ -28,34 +28,13 @@ object SparkApplication extends App{
     .config("spark.sql.catalog.nessie.catalog-impl", "org.apache.iceberg.nessie.NessieCatalog")
     .config("spark.sql.catalog.nessie.warehouse", fullPathToWarehouse)
     .config("spark.sql.catalog.nessie", "org.apache.iceberg.spark.SparkCatalog")
+    .config("spark.hadoop.fs.s3a.access.key", "admin")
+    .config("spark.hadoop.fs.s3a.secret.key", "password")
+    .config("spark.hadoop.fs.s3a.impl", "org.apache.hadoop.fs.s3a.S3AFileSystem")
+    .config("spark.hadoop.fs.s3a.path.style.access", "true")
+    .config("spark.hadoop.fs.s3a.endpoint", "http://localhost:9000")
+    .config("spark.dremio.s3.compat", "true")
     .master("local[*]").getOrCreate()
 
-  import spark.implicits._
-  print("\n Showing Sample DataFrame")
-  List((1, 20),(2, 30),(3, 50),(4, 50)).toDF("score", "data").show()
-
-  def runQueries():Unit = {
-
-    spark.sql("DROP TABLE IF EXISTS nessie.names").show()
-
-    spark.sql("CREATE TABLE IF NOT EXISTS nessie.names (name STRING) USING iceberg").show()
-
-    spark.sql("INSERT INTO nessie.names VALUES ('Alex Merced'), ('Dipankar Mazumdar'), ('Jason Huges')").show()
-
-    spark.sql("SELECT * FROM nessie.names").show()
-
-    spark.sql("CREATE BRANCH IF NOT EXISTS my_branch IN nessie").show()
-
-    spark.sql("USE REFERENCE my_branch IN nessie").show()
-
-    spark.sql("INSERT INTO nessie.names VALUES ('Alex Merced'), ('Dipankar Mazumdar'), ('Jason Huges')").show()
-
-    spark.sql("SELECT * FROM nessie.names").show()
-
-    spark.sql("USE REFERENCE main IN nessie").show()
-
-    spark.sql("SELECT * FROM nessie.names").show()
-  }
-
-  runQueries()
+  spark.sparkContext.setLogLevel("ERROR")
 }

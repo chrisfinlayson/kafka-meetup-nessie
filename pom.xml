@@ -13,6 +13,7 @@
         <scala-binary.version>2.13</scala-binary.version>
         <scala.version>${scala-binary.version}.8</scala.version>
         <spark.version>3.5.1</spark.version>
+        <hadoop.version>3.3.4</hadoop.version>
         <scalatest.version>3.0.8</scalatest.version>
         <mockito.version>2.21.0</mockito.version>
         <nessie.version></nessie.version>
@@ -58,7 +59,16 @@
                 </exclusion>
             </exclusions>
         </dependency>
-
+        <dependency>
+            <groupId>org.apache.hadoop</groupId>
+            <artifactId>hadoop-aws</artifactId>
+            <version>${hadoop.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.amazonaws</groupId>
+            <artifactId>aws-java-sdk</artifactId>
+            <version>1.12.262</version> <!-- Use the version that is compatible with your Hadoop version -->
+        </dependency>
         <!--test dependencies-->
         <dependency>
             <groupId>org.scalatest</groupId>
@@ -94,6 +104,11 @@
             <groupId>org.projectnessie.nessie-integrations</groupId>
             <artifactId>nessie-spark-extensions-3.5_2.13</artifactId>
             <version>0.83.2</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.spark</groupId>
+            <artifactId>spark-sql-kafka-0-10_${scala-binary.version}</artifactId>
+            <version>3.5.1</version>
         </dependency>
     </dependencies>
 
@@ -144,6 +159,27 @@
                 <plugin>
                     <artifactId>maven-project-info-reports-plugin</artifactId>
                     <version>${maven-project-info-reports.version}</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-shade-plugin</artifactId>
+                    <version>3.2.4</version>
+                    <executions>
+                        <execution>
+                            <phase>package</phase>
+                            <goals>
+                                <goal>shade</goal>
+                            </goals>
+                            <configuration>
+                                <artifactSet>
+                                    <includes>
+                                        <include>org.apache.hadoop:hadoop-aws</include>
+                                        <include>com.amazonaws:aws-java-sdk</include>
+                                    </includes>
+                                </artifactSet>
+                            </configuration>
+                        </execution>
+                    </executions>
                 </plugin>
             </plugins>
         </pluginManagement>

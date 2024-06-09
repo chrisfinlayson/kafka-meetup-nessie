@@ -1,0 +1,55 @@
+services:
+ nessie:
+   image: projectnessie/nessie
+   ports:
+     - "19120:19120"
+ lensesio-box:
+   image: lensesio/box
+   environment:
+      - EULA=https://licenses.lenses.io/download/lensesdl?id=3f40a04b-193e-11ef-bf14-42010af01003
+      - ADV_HOST=127.0.0.1
+      - LENSES_CONNECTORS_INFO= |
+        [
+            {
+            class.name = "io.tabular.iceberg.connect.IcebergSinkConnector"
+            name = "Iceberg Sink Connector"
+            instance = "file"
+            sink = true
+            extractor.class = "io.lenses.config.kafka.connect.SimpleTopicsExtractor"
+            icon = "iceberg.png"
+            description = "Used to sink data to Iceberg tables"
+            author = "Tabular"
+        }
+        ]
+      - SAMPLEDATA=0
+   volumes:
+     - ./lenses.conf:/run/lenses/lenses.conf
+     - ./lenses.conf:/opt/lenses/lenses.conf
+     - /Users/christopherfinlayson/dev/tabular-iceberg-kafka-connect-0.6.18:/connectors/third-party/tabular-iceberg-kafka-connect-0.6.18
+     
+   ports:
+     - "3030:3030"
+     - "9092:9092"
+ shadowtraffic:
+   network_mode: host
+   env_file:
+     - ./license.env
+   volumes:
+     - .:/workspace
+   image: shadowtraffic/shadowtraffic:latest
+   entrypoint: ["java", "-jar", "/home/shadowtraffic.jar"]
+   command: ["--config", "/workspace/shadow-config.json"]
+#  zeppelin:
+#    image: apache/zeppelin:0.10.1
+#    container_name: zeppelin
+#    ports:
+#      - "8080:8080"
+#    volumes:
+#      - ./zeppelin/notebook:/opt/zeppelin/notebook
+#      - ./zeppelin/conf:/opt/zeppelin/conf
+#      - ./:/home
+#      - /opt/spark/version/spark-3.5.1-bin-hadoop3:/opt/zeppelin/spark
+#      - /opt/hadoop/version/hadoop-3.3.6:/opt/zeppelin/hadoop
+#    environment:
+#      - "SPARK_HOME=/opt/zeppelin/spark"
+#      - "HADOOP_CONF_DIR=/opt/zeppelin/hadoop/etc/hadoop"
