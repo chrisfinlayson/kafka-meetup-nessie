@@ -13,3 +13,23 @@ docker compose up --build kafka-connect
 docker compose up shadowtraffic
 
 # Part 3 - Introduce problematic stream
+Create new source branch
+Add null order status values to Order stream // CHANGE TO DEFECT IN SPARK CODE
+<!-- Restart shadowtraffic -->
+Run transformation
+Technical checkout of data in Dremio
+Merge source branch to main
+Merge nessie branch to main // Automate?
+
+# Part 4 - Recovery
+Kill kafka connect sink
+
+Locate offset of first null
+Revert source branch to pre-merge
+Revert nessie branch to pre-merge
+Re-run transformation
+
+Update consumer group values for topic
+Restart kafka sink
+
+Recovered :) 
