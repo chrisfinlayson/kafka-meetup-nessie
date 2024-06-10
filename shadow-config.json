@@ -179,7 +179,7 @@
                 "table": "OrderStatus",
                 "status": {
                     "_gen": "oneOf",
-                    "choices": [""]
+                    "choices": ["OrderPlaced", "OrderUpdated", "OrderCancelled"]
                 },
                 "orderID": {
                     "_gen": "lookup",
