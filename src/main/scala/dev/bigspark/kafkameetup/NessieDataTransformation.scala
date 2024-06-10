@@ -53,26 +53,26 @@ object NessieDataTransformation extends App with SharedSparkSession with NessieM
     val order = selectData("order")
 
 
-//    println("Customer Schema:")
-//    customer.printSchema()
-//    println("Product Schema:")
-//    product.printSchema()
-//    println("Order Status Schema:")
-//    orderStatus.printSchema()
-//    println("Order Line Schema:")
-//    orderLine.printSchema()
-//    println("Order Schema:")
-//    order.printSchema()
+    //    println("Customer Schema:")
+    //    customer.printSchema()
+    //    println("Product Schema:")
+    //    product.printSchema()
+    //    println("Order Status Schema:")
+    //    orderStatus.printSchema()
+    //    println("Order Line Schema:")
+    //    orderLine.printSchema()
+    //    println("Order Schema:")
+    //    order.printSchema()
 
     // Joining the 'order' and 'orderStatus' DataFrames on 'orderID' column
     val orderWithStatus = order.join(orderStatus, order("orderID") === orderStatus("orderID"))
-    
+
     // Joining the result of the previous join with 'customer' DataFrame on 'customerID' column
     val orderWithCustomer = orderWithStatus.join(customer, order("customerID") === customer("customerID"), "left")
-    
+
     // Joining the result of the previous join with 'orderLine' DataFrame on 'orderID' column
     val orderWithCustomerAndLines = orderWithCustomer.join(orderLine, order("orderID") === orderLine("orderLineID"), "left")
-    
+
     // Joining the result of the previous join with 'product' DataFrame on 'productID' column
     val finalDF = orderWithCustomerAndLines.join(product, orderLine("productID") === product("productID"), "left")
     val resultDF = finalDF.select(
@@ -100,24 +100,18 @@ object NessieDataTransformation extends App with SharedSparkSession with NessieM
 
   }
 
-//  cleanUp()
+  //  cleanUp()
+  import sys.process._
+  val gitBranch = "git rev-parse --abbrev-ref HEAD".!!.trim
+  println(s"Current git branch: $gitBranch")
+  createBranch(gitBranch)
+  useReference(gitBranch)
+
   dropTable("modelCustomerOrder")
   private val df = conformRawToOrderModel()
   createTable(df)
 
-//  while (true) {
-//    val dfAppend = conformRawToOrderModel()
-//    insertIntoTable(dfAppend)
-//    val table = spark.catalog.getTable("nessie.modelCustomerOrder")
-//    //Compact the table each run
-//    val catalog = org.apache.iceberg.spark.SparkCatalog
-//    SparkActions
-//      .get()
-//      .rewriteDataFiles((spark, "nessie.modelCustomerOrder"))
-//      .option("min-input-files", "2")
-//      .execute();
-//
-//    selectData("modelCustomerOrder").show()
-//    Thread.sleep(30000)
-//  }
+
+
+
 }
