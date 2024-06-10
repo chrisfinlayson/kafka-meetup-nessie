@@ -1,0 +1,14 @@
+version: '3.7'
+
+services:
+    
+  shadowtraffic:
+   container_name: shadowtraffic
+   network_mode: host
+   env_file:
+     - ./license.env
+   volumes:
+     - .:/workspace
+   image: shadowtraffic/shadowtraffic:latest
+   entrypoint: ["java", "-jar", "/home/shadowtraffic.jar"]
+   command: ["--config", "/workspace/shadow-config.json"]

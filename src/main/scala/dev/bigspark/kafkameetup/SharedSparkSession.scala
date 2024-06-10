@@ -7,7 +7,7 @@ trait SharedSparkSession {
   // Full url of the Nessie API endpoint to nessie
   val url = "http://localhost:19120/api/v1";
   // Where to store nessie tables
-  val fullPathToWarehouse = "spark-warehouse";
+  val fullPathToWarehouse = "s3a://warehouse";
   // The ref or context that nessie will operate on
   // (if different from default branch).
   // Can be the name of a Nessie branch or tag name.
