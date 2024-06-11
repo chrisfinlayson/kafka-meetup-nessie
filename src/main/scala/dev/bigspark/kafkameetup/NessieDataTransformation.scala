@@ -99,13 +99,12 @@ object NessieDataTransformation extends App with SharedSparkSession with NessieM
     resultDF
 
   }
-
-//  cleanUp()
-
+  
   while (true) {
     import sys.process._
     val gitBranch = "git rev-parse --abbrev-ref HEAD".!!.trim
     println(s"Current git branch: $gitBranch")
+    //cleanUp()
     createBranch(gitBranch)
     useReference(gitBranch)
 

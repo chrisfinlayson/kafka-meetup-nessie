@@ -15,17 +15,31 @@
     Run transformation process
 
 # Part 3 - Introduce problematic stream
-    Create new source branch
-    Add new status key to order stream in Shadowtraffic
-    Restart shadowtraffic
-        docker compose stop shadowtraffic
-        docker compose rm shadowtraffic
+    Kill Kafka connect sink
+        docker compose stop shadowtraffic kafka-connect
+        docker compose rm shadowtraffic kafka-connect
+        
+    Create new source branch 'orderstatuschange'
+    Add new status key to order stream in Shadowtraffic config
+    Repoint kafka connect sink to new branch 'orderstatuschange'
+
+    Restart shadowtraffic and kafka connect
+        docker compose up --build -d kafka-connect
         docker compose up -d shadowtraffic
+
     Adjust spark join to order from orderstatus
-    Run transformation
+    Clean up tables
+    Run transformation job
     Technical checkout of data in Dremio
+    
     Merge source branch to main
     Merge nessie branch to main
+    Repoint kafka connect sink to new branch 'main'
+    Restart kafka connect sink
+        docker compose stop shadowtraffic kafka-connect
+        docker compose rm shadowtraffic kafka-connect
+        docker compose up --build -d kafka-connect
+
 
 # Part 4 - Recovery
 
