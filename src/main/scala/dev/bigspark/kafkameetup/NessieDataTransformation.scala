@@ -82,7 +82,7 @@ object NessieDataTransformation extends App with SharedSparkSession with NessieM
       col("product.productCode").alias("product_code"),
       col("orderLine.sales").alias("sales"),
       from_unixtime(col("order.orderDate") / 1000).cast(TimestampType).alias("order_date"),
-      col("order.status").alias("status"),
+      col("orderStatus.status").alias("status"),
       col("product.productLine").alias("product_line"),
       col("product.msrp").alias("msrp"),
       col("customer.customerName").alias("customer_name"),
@@ -100,19 +100,18 @@ object NessieDataTransformation extends App with SharedSparkSession with NessieM
 
   }
   
-  while (true) {
+//  while (true) {
     import sys.process._
     val gitBranch = "git rev-parse --abbrev-ref HEAD".!!.trim
     println(s"Current git branch: $gitBranch")
-    //cleanUp()
+//    cleanUp()
     createBranch(gitBranch)
     useReference(gitBranch)
-
-    dropTable("modelCustomerOrder")
     val df = conformRawToOrderModel()
+    dropTable("modelCustomerOrder")
     createTable(df)
-    Thread.sleep(30000)
-  }
+//    Thread.sleep(30000)
+//  }
 
 
 

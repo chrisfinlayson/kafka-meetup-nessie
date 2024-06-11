@@ -1,3 +1,6 @@
+    docker compose stop minio minio-setup nessie kafka kafka-connect shadowtraffic
+    docker compose rm nessie minio minio-setup kafka kafka-connect shadowtraffic
+   
     docker compose up -d dremio
 
 # Part 1 - Initialise environment - Demonstrate Nessie catalog
@@ -9,48 +12,62 @@
     docker compose up -d nessie minio minio-setup kafka zookeeper kafka-rest-proxy
 
 # Part 2 - Show concept demo
+        cp /Users/christopherfinlayson/dev/dremio-nessie-kafka-connect/shadow-config-orig.json /Users/christopherfinlayson/dev/dremio-nessie-kafka-connect/shadow-config.json
     docker compose up --build -d kafka-connect
     docker compose up -d shadowtraffic
 
     Run transformation process
+    Check realtime dashboard
 
 # Part 3 - Introduce problematic stream
-    Kill Kafka connect sink
-        docker compose stop shadowtraffic kafka-connect
-        docker compose rm shadowtraffic kafka-connect
-        
+
+    Add new status key to order stream in Shadowtraffic config and restart
+        cp /Users/christopherfinlayson/dev/dremio-nessie-kafka-connect/shadow-config-replace.json /Users/christopherfinlayson/dev/dremio-nessie-kafka-connect/shadow-config.json
+    
+        docker compose restart shadowtraffic
+
+    Verify status is being added to the order table in Dremio
+        select * from Nessie."order" at BRANCH "main" where status is not null and status !='NULL'
+
+    !! Start the migration of the model !!
+    
     Create new source branch 'orderstatuschange'
-    Add new status key to order stream in Shadowtraffic config
-    Repoint kafka connect sink to new branch 'orderstatuschange'
+    Adjust spark job to source status from order
+    
+    Backfill of status into order table
+        
+        UPDATE Nessie."order" at BRANCH "orderstatuschange" 
+        SET status = (
+            SELECT status 
+            FROM orderstatus 
+            WHERE orderstatus.orderid = "order".orderid
+            )
 
-    Restart shadowtraffic and kafka connect
-        docker compose up --build -d kafka-connect
-        docker compose up -d shadowtraffic
-
-    Adjust spark join to order from orderstatus
-    Clean up tables
     Run transformation job
     Technical checkout of data in Dremio
+        select * from Nessie."order" at BRANCH "main" where status is not null and status !='NULL'
     
-    Merge source branch to main
+    Pull request of feature branch to main
+    Change source branch to main and pull
     Merge nessie branch to main
-    Repoint kafka connect sink to new branch 'main'
-    Restart kafka connect sink
-        docker compose stop shadowtraffic kafka-connect
-        docker compose rm shadowtraffic kafka-connect
-        docker compose up --build -d kafka-connect
-
+    
+        MERGE branch "orderstatuschange" INTO BRANCH "main"
+    
+    Run transformation process
+    Check realtime dashboard
 
 # Part 4 - Recovery
 
-Kill shadowtraffic
-Kill kafka connect sink
-    docker compose stop kafka-connect shadowtraffic
-    docker compose rm kafka-connect shadowtraffic
+
+Resolve nulls in Shadowtraffic
+    docker compose stop shadowtraffic
+    Fix status key to order stream in Shadowtraffic config
+    Restart shadowtraffic
+        docker compose restart shadowtraffic
 
 Locate offset of first null
 Create a recovery topic in intellij
-DONE Write a Spark job to read all offsets from first null and write topic to new recovery topic
+DONE Write a Spark job to read all offsets from first null and write enriched events to new recovery topic
 DONE Check recovery topic
 DONE Produce events back to order topic, note first offset
 
