@@ -76,8 +76,8 @@ object NessieApplication extends App with SharedSparkSession {
   insertData("names", "('David Walker'), ('Angus Neilson')")
   selectData("names").show()
   //TODO Check nessie to show table creation on main
-  createBranch("trustpilot_new_recruit")
-  useReference("trustpilot_new_recruit")
+  createBranch("kafka_meetup_recruit")
+  useReference("kafka_meetup_recruit")
   //TODO Check nessie to show table creation on main
   insertData("names", "('Chris Finlayson')")
   selectData("names").show()
@@ -86,11 +86,11 @@ object NessieApplication extends App with SharedSparkSession {
   useReference("main")
   selectData("names").show()
   //TODO Check nessie to show insert not on main branch
-  mergeData("trustpilot_new_recruit", "main")
+  mergeData("kafka_meetup_recruit", "main")
   useReference("main")
   //TODO Check nessie to show merge operation
   selectData("names").show()
   
   //TODO Check nessie to show branch removal
-  dropBranch("trustpilot_new_recruit")
+  dropBranch("kafka_meetup_recruit")
 }
