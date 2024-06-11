@@ -1,7 +1,5 @@
 package dev.bigspark.kafkameetup
 
-import org.apache.iceberg.catalog.TableIdentifier
-import org.apache.iceberg.spark.actions.SparkActions
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.functions.{col, from_unixtime}
 import org.apache.spark.sql.types.{DateType, TimestampType}
@@ -52,18 +50,6 @@ object NessieDataTransformation extends App with SharedSparkSession with NessieM
     val orderLine = selectData("orderline")
     val order = selectData("order")
 
-
-    //    println("Customer Schema:")
-    //    customer.printSchema()
-    //    println("Product Schema:")
-    //    product.printSchema()
-    //    println("Order Status Schema:")
-    //    orderStatus.printSchema()
-    //    println("Order Line Schema:")
-    //    orderLine.printSchema()
-    //    println("Order Schema:")
-    //    order.printSchema()
-
     // Joining the 'order' and 'orderStatus' DataFrames on 'orderID' column
     val orderWithStatus = order.join(orderStatus, order("orderID") === orderStatus("orderID"))
 
@@ -82,7 +68,7 @@ object NessieDataTransformation extends App with SharedSparkSession with NessieM
       col("product.productCode").alias("product_code"),
       col("orderLine.sales").alias("sales"),
       from_unixtime(col("order.orderDate") / 1000).cast(TimestampType).alias("order_date"),
-      col("orderStatus.status").alias("status"),
+      col("order.status").alias("status"),
       col("product.productLine").alias("product_line"),
       col("product.msrp").alias("msrp"),
       col("customer.customerName").alias("customer_name"),
