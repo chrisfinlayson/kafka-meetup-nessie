@@ -1,21 +1,28 @@
 {
     "generators": [
         {
-            "topic": "accounts",
+            "topic": "OrderEventStream",
             "key": {
-                "accountId": {
+                "orderID": {
                     "_gen": "sequentialInteger"
                 }
             },
             "value": {
-                "name": {
-                    "_gen": "string",
-                    "expr": "#{Name.fullName}"
-                       
+                "table": "Order",
+                "orderID": {
+                    "_gen": "sequentialInteger"
                 },
-                "accountType": {
+                "orderDate": {
+                    "_gen": "now"
+                },
+                "status": {
                     "_gen": "oneOf",
-                    "choices": ["checking", "savings", "current"]
+                    "choices": ["NULL"]
+                },
+                "customerID": {
+                    "_gen": "lookup",
+                    "topic": "CustomerEventStream",
+                    "path": ["key", "customerID"]
                 }
             },
             "localConfigs": {
@@ -25,44 +32,46 @@
             }
         },
         {
-            "topic": "transactions",
+            "topic": "OrderLineEventStream",
             "key": {
-                "transactionId": {
-                    "_gen": "uuid"
+                "orderLineID": {
+                    "_gen": "sequentialInteger"
                 }
             },
             "value": {
-                "accountId": {
+                "table": "OrderLine",
+                "orderLineID": {
+                    "_gen": "sequentialInteger"
+                },
+                "orderNumber": {
                     "_gen": "lookup",
-                    "topic": "accounts",
-                    "path": ["key", "accountId"]
+                    "topic": "OrderEventStream",
+                    "path": ["key", "orderNumber"]
                 },
-                "amount": {
-                    "_gen": "weightedOneOf",
-                    "choices": [
-                        {
-                            "weight": 19,
-                            "value": {
-                                "_gen": "uniformDistribution",
-                                "bounds": [1, 300]
-                            }
-                        },
-                        {
-                            "weight": 1,
-                            "value": {
-                                "_gen": "normalDistribution",
-                                "mean": 3000,
-                                "sd": 500
-                            }
-                        }
-                    ]
+                "productID": {
+                    "_gen": "lookup",
+                    "topic": "ProductEventStream",
+                    "path": ["key", "productID"]
                 },
-                "transactionCategory": {
-                    "_gen": "string",
-                    "expr": "#{Commerce.department}"
+                "quantityOrdered": {
+                    "_gen": "uniformDistribution",
+                    "bounds": [1, 5]
                 },
-                "timestamp": {
-                    "_gen": "now"
+                "priceEach": {
+                    "_gen": "uniformDistribution",
+                    "bounds": [800, 1000]
+                },
+                "sales": {
+                    "_gen": "uniformDistribution",
+                    "bounds": [200, 10000]
+                },
+                "msrp": {
+                    "_gen": "uniformDistribution",
+                    "bounds": [1, 10000]
+                },
+                "dealSize": {
+                    "_gen": "oneOf",
+                    "choices": ["Small", "Medium", "Large"]
                 }
             },
             "localConfigs": {
@@ -72,74 +81,110 @@
             }
         },
         {
-            "topic": "funnelEvents",
-            "fork": {
-                "key": {
-                    "_gen": "string",
-                    "expr": "#{Name.username}"
-                },
-                "stagger": {
-                    "ms": 200
+            "topic": "CustomerEventStream",
+            "key": {
+                "customerID": {
+                    "_gen": "sequentialInteger"
                 }
             },
-            "key": {
-                "_gen": "var",
-                "var": "forkKey"
-            },
-            "value": {},
-            "stateMachine": {
-                "_gen": "stateMachine",
-                "initial": "viewLandingPage",
-                "transitions": {
-                    "viewLandingPage": "addItemToCart",
-                    "addItemToCart": {
-                        "_gen": "oneOf",
-                        "choices": [
-                            "viewCart",
-                            "addItemToCart"
-                        ]
-                    },
-                    "viewCart": "checkout"
+            "value": {
+                "table": "Customer",
+                "customerID": {
+                    "_gen": "sequentialInteger"
                 },
-                "states": {
-                    "viewLandingPage": {
-                        "value": {
-                            "stageName": "landingPage",
-                            "referrer": {
-                                "_gen": "string",
-                                "expr": "#{Internet.url}"
-                            }
-                        }
-                    },
-                    "addItemToCart": {
-                        "value": {
-                            "stageName": "addItem",
-                            "item": {
-                                "_gen": "string",
-                                "expr": "#{Commerce.productName}"
-                            }
-                        }
-                    },
-                    "viewCart": {
-                        "value": {
-                            "stageName": "checkCart",
-                            "timestamp": {
-                                "_gen": "now"
-                            }
-                        }
-                    },
-                    "checkout": {
-                        "value": {
-                            "stageName": "purchase",
-                            "price": {
-                                "_gen": "uniformDistribution",
-                                "bounds": [
-                                    1,
-                                    100
-                                ]
-                            }
-                        }
-                    }
+                "customerName": {
+                    "_gen": "string",
+                    "expr": "#{Name.fullName}"
+                },
+                "phone": {
+                    "_gen": "string",
+                    "expr": "#{PhoneNumber.phoneNumber}"
+                },
+                "addressLine1": {
+                    "_gen": "string",
+                    "expr": "#{Address.streetAddress}"
+                },
+                "addressLine2": {
+                    "_gen": "string",
+                    "expr": "#{Address.secondaryAddress}"
+                },
+                "city": {
+                    "_gen": "string",
+                    "expr": "#{Address.city}"
+                },
+                "state": {
+                    "_gen": "string",
+                    "expr": "#{Address.state}"
+                },
+                "postalCode": {
+                    "_gen": "string",
+                    "expr": "#{Address.zipCode}"
+                },
+                "country": {
+                    "_gen": "string",
+                    "expr": "#{Address.country}"
+                },
+                "territory": {
+                    "_gen": "string",
+                    "expr": "#{Address.state}"
+                }
+            },
+            "localConfigs": {
+                "throttle": {
+                    "ms": 800
+                }
+            }
+        },
+        {
+            "topic": "ProductEventStream",
+            "key": {
+                "productID": {
+                    "_gen": "sequentialInteger"
+                }
+            },
+            "value": {
+                "table": "Product",
+                "productID": {
+                    "_gen": "sequentialInteger"
+                },
+                "productCode": {
+                    "_gen": "string",
+                    "expr": "#{Commerce.productName}"
+                },
+                "productLine": {
+                    "_gen": "oneOf",
+                    "choices": ["Classic cars", "Vintage cars", "Motorcycles", "Trucks and Buses", "Planes", "Ships"]
+                },
+                "msrp": {
+                    "_gen": "uniformDistribution",
+                    "bounds": [10000, 150000]
+                }
+            },
+            "localConfigs": {
+                "throttle": {
+                    "ms": 800
+                }
+            }
+        },
+        {
+            "topic": "OrderStatusEventStream",
+            "key": {
+                "orderID": {
+                    "_gen": "lookup",
+                    "topic": "OrderEventStream",
+                    "path": ["key", "orderNumber"]
+                }
+            },
+            "value": {
+                "table": "OrderStatus",
+                "status": {
+                    "_gen": "oneOf",
+                    "choices": ["OrderPlaced", "OrderUpdated", "OrderCancelled"]
+                },
+                "orderID": {
+                    "_gen": "lookup",
+                    "topic": "OrderEventStream",
+                    "path": ["key", "orderID"]
                 }
             },
             "localConfigs": {

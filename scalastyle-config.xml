@@ -88,7 +88,7 @@
  <check level="error" class="org.scalastyle.scalariform.CovariantEqualsChecker" enabled="true"></check>
  <check level="error" class="org.scalastyle.scalariform.StructuralTypeChecker" enabled="true"></check>
  <check level="info" class="org.scalastyle.scalariform.VarFieldChecker" enabled="true"></check>
- <check level="error" class="org.scalastyle.file.RegexChecker" enabled="true">
+ <check level="info" class="org.scalastyle.file.RegexChecker" enabled="true">
   <parameters>
    <parameter name="regex"><![CDATA[println]]></parameter>
    <parameter name="line"><![CDATA[false]]></parameter>

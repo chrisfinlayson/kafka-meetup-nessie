@@ -1,85 +1,117 @@
 package dev.bigspark.kafkameetup
 
-import org.apache.spark.sql.{DataFrame}
-import org.apache.spark.sql.functions.col
+import org.apache.iceberg.catalog.TableIdentifier
+import org.apache.iceberg.spark.actions.SparkActions
+import org.apache.spark.sql.DataFrame
+import org.apache.spark.sql.functions.{col, from_unixtime}
+import org.apache.spark.sql.types.{DateType, TimestampType}
 
-object NessieDataTransformation extends App with SharedSparkSession {
+object NessieDataTransformation extends App with SharedSparkSession with NessieMethods {
 
   spark.sparkContext.setLogLevel("ERROR")
 
-  def createBranch(branchName: String): Unit = {
-    spark.sql(s"CREATE BRANCH IF NOT EXISTS $branchName IN nessie")
+  def cleanUp(): Unit = {
+    dropTable("customer")
+    dropTable("product")
+    dropTable("orderstatus")
+    dropTable("orderline")
+    dropTable("order")
+    dropTable("modelCustomerOrder")
   }
 
-  def useReference(refName: String): Unit = {
-    spark.sql(s"USE REFERENCE $refName IN nessie").show(false)
+  def createTable(df: DataFrame): Unit = {
+    //// Persist a DataFrame into a new Iceberg table
+    df.write
+      .format("iceberg")
+      .mode("overwrite")
+      .option("path", "s3a://warehouse/modelCustomerOrder")
+      .saveAsTable("nessie.modelCustomerOrder")
   }
 
-  def createTable(tableName: String): Unit = {
-    spark.sql(s"CREATE TABLE IF NOT EXISTS nessie.$tableName (name STRING) USING iceberg")
+  def insertIntoTable(df: DataFrame): Unit = {
+    // Read the existing data
+    val existingDF = spark.read
+      .format("iceberg")
+      .load("nessie.modelCustomerOrder")
+    // Union the new data with the existing data
+    val unionDF = existingDF.union(df)
+    // Drop duplicates
+    val deduplicatedDF = unionDF.dropDuplicates()
+    // Write the deduplicated data back to the table
+    deduplicatedDF.write
+      .format("iceberg")
+      .mode("overwrite")
+      .option("path", "s3a://warehouse/modelCustomerOrder")
+      .saveAsTable("nessie.modelCustomerOrder")
   }
 
-  def insertData(tableName: String, data: String): Unit = {
-    spark.sql(s"INSERT INTO nessie.$tableName VALUES $data")
+  def conformRawToOrderModel(): DataFrame = {
+    val customer = selectData("customer")
+    val product = selectData("product")
+    val orderStatus = selectData("orderstatus")
+    val orderLine = selectData("orderline")
+    val order = selectData("order")
+
+
+    //    println("Customer Schema:")
+    //    customer.printSchema()
+    //    println("Product Schema:")
+    //    product.printSchema()
+    //    println("Order Status Schema:")
+    //    orderStatus.printSchema()
+    //    println("Order Line Schema:")
+    //    orderLine.printSchema()
+    //    println("Order Schema:")
+    //    order.printSchema()
+
+    // Joining the 'order' and 'orderStatus' DataFrames on 'orderID' column
+    val orderWithStatus = order.join(orderStatus, order("orderID") === orderStatus("orderID"))
+
+    // Joining the result of the previous join with 'customer' DataFrame on 'customerID' column
+    val orderWithCustomer = orderWithStatus.join(customer, order("customerID") === customer("customerID"), "left")
+
+    // Joining the result of the previous join with 'orderLine' DataFrame on 'orderID' column
+    val orderWithCustomerAndLines = orderWithCustomer.join(orderLine, order("orderID") === orderLine("orderLineID"), "left")
+
+    // Joining the result of the previous join with 'product' DataFrame on 'productID' column
+    val finalDF = orderWithCustomerAndLines.join(product, orderLine("productID") === product("productID"), "left")
+    val resultDF = finalDF.select(
+      col("order.orderID").alias("order_number"),
+      col("orderLine.quantityOrdered").alias("quantity_ordered"),
+      col("orderLine.priceEach").alias("price_each"),
+      col("product.productCode").alias("product_code"),
+      col("orderLine.sales").alias("sales"),
+      from_unixtime(col("order.orderDate") / 1000).cast(TimestampType).alias("order_date"),
+      col("order.status").alias("status"),
+      col("product.productLine").alias("product_line"),
+      col("product.msrp").alias("msrp"),
+      col("customer.customerName").alias("customer_name"),
+      col("customer.phone").alias("phone"),
+      col("customer.addressLine1").alias("address_line1"),
+      col("customer.addressLine2").alias("address_line2"),
+      col("customer.city").alias("city"),
+      col("customer.state").alias("state"),
+      col("customer.postalCode").alias("postal_code"),
+      col("customer.country").alias("country"),
+      col("customer.territory").alias("territory"),
+      col("orderLine.dealSize").alias("deal_size")
+    )
+    resultDF
+
   }
 
-  def selectData(tableName: String): DataFrame = {
-    spark.sql(s"SELECT * FROM nessie.$tableName")
-  }
+  //  cleanUp()
+  import sys.process._
+  val gitBranch = "git rev-parse --abbrev-ref HEAD".!!.trim
+  println(s"Current git branch: $gitBranch")
+  createBranch(gitBranch)
+  useReference(gitBranch)
 
-val customer = selectData("customer")
-val product = selectData("product")
-val orderStatus = selectData("orderstatus")
-val orderLine = selectData("orderline")
-val order = selectData("order")
+  dropTable("modelCustomerOrder")
+  private val df = conformRawToOrderModel()
+  createTable(df)
 
 
-println("Customer Schema:")
-customer.printSchema()
-println("Product Schema:")
-product.printSchema()
-println("Order Status Schema:")
-orderStatus.printSchema()
-println("Order Line Schema:")
-orderLine.printSchema()
-println("Order Schema:")
-order.printSchema()
 
-val orderWithStatus = order.join(orderStatus, Seq("table"), "left")
-val orderWithCustomer = orderWithStatus.join(customer, Seq("contactFirstName", "contactLastName"), "left")
-val orderWithCustomerAndLines = orderWithCustomer.join(orderLine, Seq("table"), "left")
-val finalDF = orderWithCustomerAndLines.join(product, Seq("table"), "left")
-
-val resultDF = finalDF.select(
-  col("orderLine.orderNumber"),
-  col("orderLine.quantityOrdered"),
-  col("orderLine.priceEach"),
-  col("orderLine.productCode"),
-  col("orderLine.sales"),
-  col("order.orderDate"),
-  col("orderStatus.status"),
-  col("product.productLine"),
-  col("product.msrp"), 
-  col("order.customerName"),
-  col("customer.phone"),
-  col("customer.addressLine1"),
-  col("customer.addressLine2"),
-  col("customer.city"),
-  col("customer.state"),
-  col("customer.postalCode"),
-  col("customer.country"),
-  col("customer.territory"),
-  col("customer.contactLastName"),
-  col("customer.contactFirstName"),
-  col("orderLine.dealSize")
-)
-
-  resultDF.show(10,false)
-//
-//// Persist the final DataFrame into a new Iceberg table
-//resultDF.write
-//  .format("iceberg")
-//  .mode("overwrite")
-//  .save("iceberg.flat_structure_table")
 
 }
