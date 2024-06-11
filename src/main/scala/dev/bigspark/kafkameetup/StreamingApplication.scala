@@ -9,20 +9,44 @@ val customersKafkaParams = Map[String, String](
   "subscribe" -> "accounts"
 )
 
-// Create a streaming DataFrame that represents the data received from Kafka
-val accountsDF = spark.readStream.format("kafka").options(customersKafkaParams).load()
+import org.apache.spark.sql.functions._
+import org.apache.spark.sql.streaming.Trigger
 
-// Display the stream to the console
-val query = accountsDF.writeStream.format("console").start()
-query.processAllAvailable()
-for(i <- 1 to 10) {
-  if(query.status.isTriggerActive) {
-    Thread.sleep(1000)
-  } else {
-    query.processAllAvailable()
-  }
-}
-query.stop()
-//transactionsDF.writeStream.format("console").start()
+// Define Kafka parameters for the 'order' topic
+val orderKafkaParams = Map[String, String](
+  "kafka.bootstrap.servers" -> kafkaBootstrapServers,
+  "subscribe" -> "order"
+)
+
+// Read the 'order' topic from Kafka
+val orderDF = spark.readStream.format("kafka").options(orderKafkaParams).load()
+
+// Extract the value and cast it to a string
+val orderValueDF = orderDF.selectExpr("CAST(value AS STRING)")
+
+// Filter rows where 'status' is null
+val nullStatusDF = orderValueDF.filter(col("value").contains("\"status\":null"))
+
+// Read the existing 'orderstatus' table
+val orderStatusDF = spark.read.format("iceberg").load("nessie.orderstatus")
+
+// Join the nullStatusDF with orderStatusDF to get the correct 'status' values
+val recoveryDF = nullStatusDF.join(orderStatusDF, "orderID")
+  .selectExpr("CAST(key AS STRING)", "to_json(struct(*)) AS value")
+
+// Define Kafka parameters for the 'order-recovery' topic
+val recoveryKafkaParams = Map[String, String](
+  "kafka.bootstrap.servers" -> kafkaBootstrapServers,
+  "topic" -> "order-recovery"
+)
+
+// Write the recovery data to the 'order-recovery' topic
+val recoveryQuery = recoveryDF.writeStream
+  .format("kafka")
+  .options(recoveryKafkaParams)
+  .trigger(Trigger.Once())
+  .start()
+
+recoveryQuery.awaitTermination()
 
 }
