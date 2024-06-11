@@ -15,13 +15,14 @@ createBranch(gitBranch)
 useReference(gitBranch)
 
 def updateOrderStatus(): Unit = {
-  val orderStatusDF = spark.sql("SELECT * FROM nessie.orderstatus")
-  val orderDF = spark.sql("SELECT * FROM nessie.order")
 
-  val updatedOrderDF = orderDF.alias("o")
-    .join(orderStatusDF.alias("os"), col("o.orderid") === col("os.orderid"))
-    .select(col("o.*"))
-    .withColumn("status", col("o.status"))
+  val updatedOrderDF = spark.sql(
+    """
+      |Select o.customerID, o.offset, o.orderDate, o.orderID, os.status, o.table
+      |from nessie.order o
+      |join nessie.orderstatus os
+      |on o.orderID=os.orderID
+      |""".stripMargin).dropDuplicates()
   updatedOrderDF.createOrReplaceTempView("updatedOrder")
   spark.sql("DROP TABLE IF EXISTS nessie.order")
   spark.sql("CREATE TABLE IF NOT EXISTS nessie.order AS SELECT * FROM updatedOrder")
