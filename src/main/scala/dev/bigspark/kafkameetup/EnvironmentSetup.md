@@ -57,6 +57,8 @@ CHECK - Tranformation job is at starting pos - orderStatus.status
     Stop producer/consumer
         docker compose stop kafka-connect
     
+    STOP spark transformation job
+    
     Create new source branch 'orderstatuschange'
         git checkout -b orderstatuschange
 
@@ -66,27 +68,23 @@ CHECK - Tranformation job is at starting pos - orderStatus.status
         
         Execute NessieBackfillApplication
     
-    Verify backfill
+    <!-- Verify backfill
 
-        select * from Nessie."order" at BRANCH "orderstatuschange"
+        select * from Nessie."order" at BRANCH "orderstatuschange" -->
 
     Run transformation job
 
-    Technical checkout of data in Dremio
-        
-        select * from Nessie."modelCustomerOrder" at BRANCH "orderstatuschange" 
-
-        Run data quality check
+    Technical checkout of data in Dremio by Analyst
+    Run data quality check
 
         select status, count(*)
         from Nessie."modelCustomerOrder" at BRANCH "orderstatuschange" 
         group by status
     
+    SLIDE
+    
     Pull request of feature branch to main
     Change source branch to main and pull
-
-    Create release branch
-        git checkout -b RELEASE/orderstatuschange
 
     Merge operation of nessie branch to main
 

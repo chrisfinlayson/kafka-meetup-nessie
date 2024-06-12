@@ -85,20 +85,18 @@ object NessieDataTransformation extends App with SharedSparkSession with NessieM
     resultDF
 
   }
-  
-//  while (true) {
+//  cleanUp()
+  while (true) {
     import sys.process._
     val gitBranch = "git rev-parse --abbrev-ref HEAD".!!.trim
     println(s"Current git branch: $gitBranch")
-//    cleanUp()
+
     createBranch(gitBranch)
     useReference(gitBranch)
     val df = conformRawToOrderModel()
     dropTable("modelCustomerOrder")
     createTable(df)
-    Thread.sleep(30000)
-//  }
-
-
+    Thread.sleep(10000)
+  }
 
 }
