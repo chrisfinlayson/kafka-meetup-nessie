@@ -1,4 +1,4 @@
-PRE REQS
+# PRE REQS
 
 CHECK - Delete test branches
 CHECK - Pull from baseline branch
@@ -17,26 +17,28 @@ CHECK - Tranformation job is at starting pos - orderStatus.status
 # Part 1.1 - Cleanup demo
     docker compose stop minio minio-setup nessie kafka
     docker compose rm nessie minio minio-setup kafka
-    docker compose up -d nessie minio minio-setup kafka zookeeper kafka-rest-proxy
+    docker compose up -d nessie minio minio-setup kafka zookeeper kafka-rest-proxy 
 
-# Part 2 - Show concept demo
-    cp /Users/christopherfinlayson/dev/dremio-nessie-kafka-connect/shadow-config-orig.json /Users/christopherfinlayson/dev/dremio-nessie-kafka-connect/shadow-config.json
+# DEMO 2
+## - Show concept demo - BAU
+
+     cp /Users/christopherfinlayson/dev/dremio-nessie-kafka-connect/shadow-config-orig.json /Users/christopherfinlayson/dev/dremio-nessie-kafka-connect/shadow-config.json
     docker compose up --build -d kafka-connect
-    docker compose up -d shadowtraffic
+    docker compose up -d shadowtraffic 
 
     Show events being generated
-        kcat -u -b localhost:9092 -G OrderEventStream OrderLineEventStream ProductEventStream | jq
+         kcat -u -b localhost:9092 -G OrderEventStream OrderLineEventStream ProductEventStream | jq 
     
-    SHow tables being created in nessie 
+    Show tables being created in nessie 
     Run transformation process
     Check realtime dashboard
 
-# Part 3 - Introduce upstream stream
+## - Introduce upstream change
 
     Show table prior to change
         select * from Nessie."order" at BRANCH "main"
 
-    SHow event stream prior to change
+    Show event stream prior to change
          kcat -u -b localhost:9092 -t OrderEventStream | jq
 
     Add new status key to order stream in Shadowtraffic config and restart
@@ -50,7 +52,7 @@ CHECK - Tranformation job is at starting pos - orderStatus.status
     Verify status is being added to the order table in Dremio
         select * from Nessie."order" at BRANCH "main" where nvl(status, 'NULL') !='NULL'
 
-    !! Start the migration of the model !!
+## !! Start the migration of the model !!
 
     Stop producer/consumer
         docker compose stop kafka-connect
@@ -88,28 +90,36 @@ CHECK - Tranformation job is at starting pos - orderStatus.status
 
     Merge operation of nessie branch to main
 
-        MERGE BRANCH "orderstatuschange" INTO "main" IN Nessie
+         MERGE BRANCH "orderstatuschange" INTO "main" IN Nessie 
 
     Restart producer/consumer
-        docker compose restart kafka-connect
+         docker compose restart kafka-connect 
 
-    Run transformation process
+    Run transformation process IN LOOP
     Check realtime dashboard
 
-# Part 4 - Recovery
+# DEMO 3 - Recovery
 Pause kafka sink 
-    docker compose stop kafka-connect 
+     docker compose stop kafka-connect  
+
+Show corruption on dashboard?
+
+Show corruption in table
+
+     select status, count(*)
+        from Nessie."modelCustomerOrder" at BRANCH "main" 
+        group by status; 
 
 Stop transformation Spark job
 
 Revert nessie branch to pre-merge
-    ALTER BRANCH "main" ASSIGN COMMIT "3d9794e53329436136379f4967ccd03a003abfd3262bda8596b6fa372b054ad2" in nessie
+     ALTER BRANCH "main" ASSIGN COMMIT "e99bd33671c69607e23a72739c2ae4681f817ecb92d618baaff96dacba4ad231" in nessie 
 
 Revert source branch to pre-merge state
 
 Update consumer group values to last values for all topics
 
-select 'order', max("offset") from Nessie."order" at BRANCH "main"
+ select 'order', max("offset") from Nessie."order" at BRANCH "main"
 UNION ALL
 select 'orderstatus', max("offset") from Nessie."order" at BRANCH "main"
 UNION ALL
@@ -117,14 +127,14 @@ select 'orderline', max("offset") from Nessie."orderline" at BRANCH "main"
 UNION ALL
 select 'product', max("offset") from Nessie."product" at BRANCH "main"
 UNION ALL
-select 'customer', max("offset") from Nessie."customer" at BRANCH "main"
+select 'customer', max("offset") from Nessie."customer" at BRANCH "main" 
 
 
 Update consumer group value for Order topic to first recovery value
     Using ConsumerGroupOffsetApplication
 
 Restart kafka sink
-    docker compose restart kafka-connect
+     docker compose restart kafka-connect 
 
 Re-run transformation process
 

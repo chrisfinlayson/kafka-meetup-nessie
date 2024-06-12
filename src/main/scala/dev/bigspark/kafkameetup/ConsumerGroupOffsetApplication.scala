@@ -5,11 +5,11 @@ import scala.sys.process._
 object ConsumerGroupOffsetApplication extends App  {
 
 val topicOffsets = Map(
-  "OrderEventStream" -> 1764,
-  "OrderStatusEventStream" -> 1764,
-  "OrderLineEventStream" -> 4690,
-  "ProductEventStream" -> 1176,
-  "CustomerEventStream" -> 1177
+  "OrderEventStream" -> 1103,
+  "OrderStatusEventStream" -> 1103,
+  "OrderLineEventStream" -> 2879,
+  "ProductEventStream" -> 735,
+  "CustomerEventStream" -> 736
 )
 
 topicOffsets.foreach { case (topic, offset) =>
