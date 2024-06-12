@@ -62,13 +62,13 @@ object NessieDataTransformation extends App with SharedSparkSession with NessieM
     // Joining the result of the previous join with 'product' DataFrame on 'productID' column
     val finalDF = orderWithCustomerAndLines.join(product, orderLine("productID") === product("productID"), "left")
     val resultDF = finalDF.select(
-      col("orderStatus.orderID").alias("order_number"),
+      col("order.orderID").alias("order_number"),
       col("orderLine.quantityOrdered").alias("quantity_ordered"),
       col("orderLine.priceEach").alias("price_each"),
       col("product.productCode").alias("product_code"),
       col("orderLine.sales").alias("sales"),
       from_unixtime(col("order.orderDate") / 1000).cast(TimestampType).alias("order_date"),
-      col("orderStatus.status").alias("status"),
+      col("order.status").alias("status"),
       col("product.productLine").alias("product_line"),
       col("product.msrp").alias("msrp"),
       col("customer.customerName").alias("customer_name"),

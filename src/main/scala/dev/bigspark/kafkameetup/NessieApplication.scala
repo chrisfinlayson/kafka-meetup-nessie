@@ -78,7 +78,7 @@ object NessieApplication extends App with SharedSparkSession {
   //TODO Check nessie to show table creation on main
   createBranch("kafka_meetup_recruit")
   useReference("kafka_meetup_recruit")
-  //TODO Check nessie to show table creation on main
+  //TODO Check nessie to show table creation on new branch
   insertData("names", "('Chris Finlayson')")
   selectData("names").show()
 
