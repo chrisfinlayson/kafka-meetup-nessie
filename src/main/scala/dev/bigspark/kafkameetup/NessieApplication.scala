@@ -62,7 +62,7 @@ object NessieApplication extends App with SharedSparkSession {
   def selectData(tableName: String): DataFrame = {
     val sql_str=(s"SELECT * FROM nessie.$tableName")
     println(sql_str)
-    return spark.sql(sql_str)
+    spark.sql(sql_str)
   }
 
   def mergeData(sourceBranchName: String, targetBranchName: String): Unit = {
