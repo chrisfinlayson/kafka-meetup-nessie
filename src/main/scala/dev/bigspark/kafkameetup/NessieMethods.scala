@@ -32,6 +32,7 @@ trait NessieMethods extends SharedSparkSession {
     spark.sql(sql_str)
   }
 
+
   def insertData(tableName: String, data: String): Unit = {
     val sql_str=(s"INSERT INTO nessie.$tableName VALUES $data")
     println(sql_str)
