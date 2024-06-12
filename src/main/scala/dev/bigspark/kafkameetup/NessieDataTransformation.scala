@@ -86,7 +86,7 @@ object NessieDataTransformation extends App with SharedSparkSession with NessieM
 
   }
 //  cleanUp()
-  while (true) {
+//  while (true) {
     import sys.process._
     val gitBranch = "git rev-parse --abbrev-ref HEAD".!!.trim
     println(s"Current git branch: $gitBranch")
@@ -96,7 +96,7 @@ object NessieDataTransformation extends App with SharedSparkSession with NessieM
     val df = conformRawToOrderModel()
     dropTable("modelCustomerOrder")
     createTable(df)
-    Thread.sleep(10000)
-  }
+//    Thread.sleep(10000)
+//  }
 
 }
