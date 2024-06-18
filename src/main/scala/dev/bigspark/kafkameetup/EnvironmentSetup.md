@@ -30,7 +30,7 @@ CHECK - Tranformation job is at starting pos - orderStatus.status
          kcat -u -b localhost:9092 -G OrderEventStream OrderLineEventStream ProductEventStream | jq 
     
     Show tables being created in nessie 
-    Run transformation process
+    Run transformation process - NO LOOP
     Check realtime dashboard
 
 ## - Introduce upstream change
@@ -72,7 +72,7 @@ CHECK - Tranformation job is at starting pos - orderStatus.status
 
         select * from Nessie."order" at BRANCH "orderstatuschange" -->
 
-    Run transformation job
+    Run transformation job - NO LOOP
 
     Technical checkout of data in Dremio by Analyst
     Run data quality check
@@ -111,7 +111,7 @@ Show corruption in table
 Stop transformation Spark job
 
 Revert nessie branch to pre-merge
-     ALTER BRANCH "main" ASSIGN COMMIT "e99bd33671c69607e23a72739c2ae4681f817ecb92d618baaff96dacba4ad231" in nessie 
+     ALTER BRANCH "main" ASSIGN COMMIT "43e5f62abc9acc6b36b8c5afe7d57197a345a602ebe609a599b7d05392bb423d" in nessie 
 
 Revert source branch to pre-merge state
 
